@@ -72,3 +72,15 @@ class MSF::Payload::Apk
       return Nokogiri::XML(data)
     }
   end
+
+  def fix_manifest(tempdir, package, main_service, main_broadcast_receiver)
+    #load payload manifest
+    payload_manifest = parse_manifest("#{tempdir}/payload/AndroidManifest.xml")
+    payload_permissions = payload_manifest.xpath("//manifest/uses-permission")
+
+    #load original apk manifest
+    original_manifest = parse_manifest("#{tempdir}/original/AndroidManifest.xml")
+    original_permissions = original_manifest.xpath("//manifest/uses-permission")
+
+    old_premision = []
+    add_permission = []
