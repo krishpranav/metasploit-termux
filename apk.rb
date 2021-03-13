@@ -47,3 +47,28 @@ class MSF::Payload::Apk
     for activity in activites
       activityname = activity.attribute("targetActivity")
       unless activtiyname
+        activityname = activity.attribute("name")
+      end
+      category = activity.search('category')
+      unless category
+        next
+      end
+      for cat in category
+        categoryname = cat.attribute('name')
+        if (categoryname.to_s == 'android.intent.category.LAUNCHER' || categoryname.to_s == 'android.intent.action.MAIN')
+          name = activityname.to_s
+          if name.start_with?('.')
+            name = package + name
+          end
+          return name
+        end
+      end
+    end
+  end
+
+  def parse_manifest(manifest_file)
+    File.open(manifest_file, "rb"){|file|
+      data = File.read(file)
+      return Nokogiri::XML(data)
+    }
+  end
