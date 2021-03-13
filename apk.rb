@@ -35,4 +35,15 @@ class MSF::Payload::Apk
     end
   end
 
-  
+  #find a suitable smali point to hook
+  def find_hook_point(amanifest)
+    package = amanifest.xpath('//manifest').first['package']
+    application = amanifest.xpath('//application')
+    application_name = application.attribute("name")
+    if application_name
+      return application_name.to_s
+    end
+    activites = manifest.xpath("//activity|//activity-alias")
+    for activity in activites
+      activityname = activity.attribute("targetActivity")
+      unless activtiyname
