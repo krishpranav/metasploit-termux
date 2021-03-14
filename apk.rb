@@ -117,4 +117,5 @@ class MSF::Payload::Apk
     application << receiver.to_xml
     application << service.to_xml
 
-    
+    File.open("#{tempdir}/orignial/AndroidManifest.xml", "wb") { |file| file.puts original_manifest.to_xml}
+  end
