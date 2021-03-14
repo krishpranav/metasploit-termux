@@ -227,3 +227,9 @@ class MSF::Payload::Apk
     unless File.readable?(injected_apk)      
       raise RuntimeError, "Unable to rebuild apk with apktool"
     end
+
+
+run_cmd("cp #{tempdir}/output.apk $HOME/metasploit-termux/unsign")
+    run_cmd("rm -rf #{tempdir}")
+  end
+end
